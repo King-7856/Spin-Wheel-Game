@@ -22,14 +22,16 @@ justify-content:center;
 align-items:center;
 flex-direction:column;
 background:linear-gradient(180deg,#ff5fb2,#6a11cb);
+padding:10px;
 }
 
 h1{
 color:white;
-font-size:55px;
+font-size:clamp(28px,6vw,55px);
 margin-bottom:20px;
 text-shadow:0 0 25px rgba(255,255,255,0.8);
 animation:pulse 2s infinite;
+text-align:center;
 }
 
 @keyframes pulse{
@@ -40,8 +42,8 @@ animation:pulse 2s infinite;
 
 .container{
 position:relative;
-width:540px;
-height:540px;
+width:min(92vw,540px);
+height:min(92vw,540px);
 display:flex;
 justify-content:center;
 align-items:center;
@@ -49,14 +51,14 @@ align-items:center;
 
 .pointer{
 position:absolute;
-top:2px;
+top:-5px;
 left:50%;
 transform:translateX(-50%);
 width:0;
 height:0;
-border-left:24px solid transparent;
-border-right:24px solid transparent;
-border-top:45px solid yellow;
+border-left:18px solid transparent;
+border-right:18px solid transparent;
+border-top:38px solid yellow;
 z-index:20;
 filter:drop-shadow(0 0 15px yellow);
 animation:pointerGlow 1s infinite alternate;
@@ -75,12 +77,12 @@ filter:drop-shadow(0 0 25px yellow);
 width:100%;
 height:100%;
 border-radius:50%;
-border:10px solid white;
+border:8px solid white;
+background:white;
 box-shadow:
 0 0 35px rgba(255,255,255,0.7),
 0 0 90px rgba(255,0,128,0.6);
 transition:transform 5s cubic-bezier(0.17,0.67,0.12,0.99);
-background:white;
 }
 
 .flash{
@@ -102,14 +104,14 @@ box-shadow:
 
 .centerCircle{
 position:absolute;
-width:110px;
-height:110px;
+width:22%;
+height:22%;
 background:white;
 border-radius:50%;
 display:flex;
 justify-content:center;
 align-items:center;
-font-size:30px;
+font-size:clamp(16px,3vw,30px);
 font-weight:bold;
 color:#ff0080;
 z-index:10;
@@ -118,10 +120,10 @@ box-shadow:0 0 25px white;
 
 .spinBtn{
 margin-top:25px;
-padding:18px 55px;
+padding:14px 40px;
 border:none;
 border-radius:50px;
-font-size:28px;
+font-size:clamp(18px,4vw,28px);
 font-weight:bold;
 cursor:pointer;
 color:white;
@@ -161,7 +163,7 @@ transform:translateY(-120vh) rotate(360deg);
 
 <div class="pointer"></div>
 
-<canvas id="wheel" width="540" height="540"></canvas>
+<canvas id="wheel"></canvas>
 
 <div class="centerCircle">
 SPIN
@@ -239,9 +241,29 @@ const total = options.length;
 
 const arc = (2 * Math.PI) / total;
 
-function drawWheel(){
+let spinning = false;
 
-ctx.clearRect(0,0,540,540);
+let currentRotation = 0;
+
+function resizeCanvas(){
+
+const size = wheel.offsetWidth;
+
+canvas.width = size;
+
+canvas.height = size;
+
+drawWheel(size);
+
+}
+
+function drawWheel(size){
+
+ctx.clearRect(0,0,size,size);
+
+const center = size / 2;
+
+const radius = size / 2;
 
 for(let i=0;i<total;i++){
 
@@ -249,12 +271,12 @@ const angle = i * arc;
 
 ctx.beginPath();
 
-ctx.moveTo(270,270);
+ctx.moveTo(center,center);
 
 ctx.arc(
-270,
-270,
-270,
+center,
+center,
+radius,
 angle,
 angle + arc
 );
@@ -265,7 +287,7 @@ ctx.fill();
 
 ctx.save();
 
-ctx.translate(270,270);
+ctx.translate(center,center);
 
 ctx.rotate(angle + arc/2);
 
@@ -273,11 +295,15 @@ ctx.fillStyle = "white";
 
 ctx.textAlign = "center";
 
+ctx.textBaseline = "middle";
+
 let text = options[i];
+
+const textDistance = radius * 0.65;
 
 if(text.length > 12){
 
-ctx.font = "bold 18px Arial";
+ctx.font = `bold ${size*0.03}px Arial`;
 
 const words = text.split(" ");
 
@@ -285,20 +311,20 @@ for(let j=0;j<words.length;j++){
 
 ctx.fillText(
 words[j],
-170,
-(j * 24) - 25
+textDistance,
+(j * size*0.04) - 15
 );
 
 }
 
 }else{
 
-ctx.font = "bold 26px Arial";
+ctx.font = `bold ${size*0.045}px Arial`;
 
 ctx.fillText(
 text,
-170,
-10
+textDistance,
+0
 );
 
 }
@@ -309,9 +335,9 @@ ctx.restore();
 
 }
 
-drawWheel();
+window.addEventListener("resize",resizeCanvas);
 
-let spinning = false;
+resizeCanvas();
 
 spinBtn.addEventListener("click",()=>{
 
@@ -327,15 +353,14 @@ Math.floor(Math.random() * total);
 const degreePerSlice = 360 / total;
 
 const stopAngle =
-360 - (randomIndex * degreePerSlice) - (degreePerSlice/2);
+360 - (randomIndex * degreePerSlice) - (degreePerSlice / 2);
 
 const extraSpin = 360 * 6;
 
-const finalRotation =
-extraSpin + stopAngle;
+currentRotation += extraSpin + stopAngle;
 
 wheel.style.transform =
-`rotate(${finalRotation}deg)`;
+`rotate(${currentRotation}deg)`;
 
 spinSound.loop = true;
 
@@ -354,7 +379,9 @@ crowdSound.play();
 wheel.classList.add("flash");
 
 setTimeout(()=>{
+
 wheel.classList.remove("flash");
+
 },2500);
 
 spinning = false;
@@ -371,7 +398,8 @@ heart.classList.add("bgHeart");
 
 heart.innerHTML = "❤";
 
-heart.style.left = Math.random()*100 + "%";
+heart.style.left =
+Math.random()*100 + "%";
 
 heart.style.fontSize =
 (15 + Math.random()*30) + "px";
