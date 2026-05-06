@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Love Spin Wheel</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+height:100vh;
+overflow:hidden;
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+background:linear-gradient(180deg,#ff5fb2,#6a11cb);
+}
+
+h1{
+color:white;
+font-size:55px;
+margin-bottom:20px;
+text-shadow:0 0 25px rgba(255,255,255,0.8);
+animation:pulse 2s infinite;
+}
+
+@keyframes pulse{
+0%{transform:scale(1);}
+50%{transform:scale(1.05);}
+100%{transform:scale(1);}
+}
+
+.container{
+position:relative;
+width:540px;
+height:540px;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+.pointer{
+position:absolute;
+top:2px;
+left:50%;
+transform:translateX(-50%);
+width:0;
+height:0;
+border-left:24px solid transparent;
+border-right:24px solid transparent;
+border-top:45px solid yellow;
+z-index:20;
+filter:drop-shadow(0 0 15px yellow);
+animation:pointerGlow 1s infinite alternate;
+}
+
+@keyframes pointerGlow{
+from{
+filter:drop-shadow(0 0 5px yellow);
+}
+to{
+filter:drop-shadow(0 0 25px yellow);
+}
+}
+
+#wheel{
+width:100%;
+height:100%;
+border-radius:50%;
+border:10px solid white;
+box-shadow:
+0 0 35px rgba(255,255,255,0.7),
+0 0 90px rgba(255,0,128,0.6);
+transition:transform 5s cubic-bezier(0.17,0.67,0.12,0.99);
+background:white;
+}
+
+.flash{
+animation:flash 0.5s infinite alternate;
+}
+
+@keyframes flash{
+from{
+box-shadow:
+0 0 20px white,
+0 0 40px #ff00c8;
+}
+to{
+box-shadow:
+0 0 40px yellow,
+0 0 100px #ff0080;
+}
+}
+
+.centerCircle{
+position:absolute;
+width:110px;
+height:110px;
+background:white;
+border-radius:50%;
+display:flex;
+justify-content:center;
+align-items:center;
+font-size:30px;
+font-weight:bold;
+color:#ff0080;
+z-index:10;
+box-shadow:0 0 25px white;
+}
+
+.spinBtn{
+margin-top:25px;
+padding:18px 55px;
+border:none;
+border-radius:50px;
+font-size:28px;
+font-weight:bold;
+cursor:pointer;
+color:white;
+background:linear-gradient(45deg,#ff0066,#ff4da6);
+box-shadow:0 0 25px #ff4da6;
+transition:0.3s;
+}
+
+.spinBtn:hover{
+transform:scale(1.08);
+}
+
+.bgHeart{
+position:absolute;
+color:rgba(255,255,255,0.12);
+animation:float 10s linear infinite;
+user-select:none;
+}
+
+@keyframes float{
+from{
+transform:translateY(100vh) rotate(0deg);
+}
+to{
+transform:translateY(-120vh) rotate(360deg);
+}
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>LOVE SPIN WHEEL</h1>
+
+<div class="container">
+
+<div class="pointer"></div>
+
+<canvas id="wheel" width="540" height="540"></canvas>
+
+<div class="centerCircle">
+SPIN
+</div>
+
+</div>
+
+<button class="spinBtn" id="spinBtn">
+SPIN
+</button>
+
+<audio id="spinSound" preload="auto">
+<source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3">
+</audio>
+
+<audio id="winSound" preload="auto">
+<source src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3">
+</audio>
+
+<audio id="crowdSound" preload="auto">
+<source src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3">
+</audio>
+
+<audio id="clickSound" preload="auto">
+<source src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3">
+</audio>
+
+<script>
+
+const canvas = document.getElementById("wheel");
+
+const ctx = canvas.getContext("2d");
+
+const spinBtn = document.getElementById("spinBtn");
+
+const wheel = document.getElementById("wheel");
+
+const spinSound = document.getElementById("spinSound");
+
+const winSound = document.getElementById("winSound");
+
+const crowdSound = document.getElementById("crowdSound");
+
+const clickSound = document.getElementById("clickSound");
+
+const options = [
+
+"Kuch Nhi",
+"Kissy Pic 5",
+"Kuch Nhi",
+"Say I Love You 5 Times",
+"Kuch Nhi",
+"Up And Down 10 Times",
+"Kuch Nhi",
+"Kuch Nhi",
+"Kuch Nhi"
+
+];
+
+const colors = [
+
+"#ff006e",
+"#3a86ff",
+"#fb5607",
+"#ffbe0b",
+"#06d6a0",
+"#ff006e",
+"#8338ec",
+"#ff4d6d",
+"#8338ec"
+
+];
+
+const total = options.length;
+
+const arc = (2 * Math.PI) / total;
+
+function drawWheel(){
+
+ctx.clearRect(0,0,540,540);
+
+for(let i=0;i<total;i++){
+
+const angle = i * arc;
+
+ctx.beginPath();
+
+ctx.moveTo(270,270);
+
+ctx.arc(
+270,
+270,
+270,
+angle,
+angle + arc
+);
+
+ctx.fillStyle = colors[i];
+
+ctx.fill();
+
+ctx.save();
+
+ctx.translate(270,270);
+
+ctx.rotate(angle + arc/2);
+
+ctx.fillStyle = "white";
+
+ctx.textAlign = "center";
+
+let text = options[i];
+
+if(text.length > 12){
+
+ctx.font = "bold 18px Arial";
+
+const words = text.split(" ");
+
+for(let j=0;j<words.length;j++){
+
+ctx.fillText(
+words[j],
+170,
+(j * 24) - 25
+);
+
+}
+
+}else{
+
+ctx.font = "bold 26px Arial";
+
+ctx.fillText(
+text,
+170,
+10
+);
+
+}
+
+ctx.restore();
+
+}
+
+}
+
+drawWheel();
+
+let spinning = false;
+
+spinBtn.addEventListener("click",()=>{
+
+if(spinning) return;
+
+spinning = true;
+
+clickSound.play();
+
+const randomIndex =
+Math.floor(Math.random() * total);
+
+const degreePerSlice = 360 / total;
+
+const stopAngle =
+360 - (randomIndex * degreePerSlice) - (degreePerSlice/2);
+
+const extraSpin = 360 * 6;
+
+const finalRotation =
+extraSpin + stopAngle;
+
+wheel.style.transform =
+`rotate(${finalRotation}deg)`;
+
+spinSound.loop = true;
+
+spinSound.play();
+
+setTimeout(()=>{
+
+spinSound.pause();
+
+spinSound.currentTime = 0;
+
+winSound.play();
+
+crowdSound.play();
+
+wheel.classList.add("flash");
+
+setTimeout(()=>{
+wheel.classList.remove("flash");
+},2500);
+
+spinning = false;
+
+},5000);
+
+});
+
+for(let i=0;i<40;i++){
+
+const heart = document.createElement("div");
+
+heart.classList.add("bgHeart");
+
+heart.innerHTML = "❤";
+
+heart.style.left = Math.random()*100 + "%";
+
+heart.style.fontSize =
+(15 + Math.random()*30) + "px";
+
+heart.style.animationDuration =
+(5 + Math.random()*8) + "s";
+
+document.body.appendChild(heart);
+
+}
+
+</script>
+
+</body>
+</html>
